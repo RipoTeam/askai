@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
-import { X, Mic, MicOff, Phone } from 'lucide-react'
+import { X, Mic, MicOff } from 'lucide-react'
 import { io, Socket } from 'socket.io-client'
 
 interface VoiceCallProps {

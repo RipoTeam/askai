@@ -1,7 +1,6 @@
-import { useEffect, useState } from 'react'
+import { useEffect } from 'react'
 import { Routes, Route } from 'react-router-dom'
 import { useAuthStore } from '../store/authStore'
-import { useChatStore } from '../store/chatStore'
 import { useSettingsStore } from '../store/settingsStore'
 import { setAuthToken } from '../lib/api'
 import Sidebar from '../components/Sidebar'
@@ -9,7 +8,7 @@ import ChatArea from '../components/ChatArea'
 import Settings from '../components/Settings'
 
 export default function Chat() {
-  const { token, user } = useAuthStore()
+  const { token } = useAuthStore()
   const { theme } = useSettingsStore()
 
   useEffect(() => {
