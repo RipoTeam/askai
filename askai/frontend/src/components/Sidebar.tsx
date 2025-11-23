@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate, useParams } from 'react-router-dom'
-import { MessageSquare, Plus, Settings, LogOut, Trash2, Edit2 } from 'lucide-react'
+import { MessageSquare, Plus, Settings, LogOut, Trash2 } from 'lucide-react'
 import { useAuthStore } from '../store/authStore'
 import { useChatStore } from '../store/chatStore'
 import api from '../lib/api'

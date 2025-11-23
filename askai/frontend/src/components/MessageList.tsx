@@ -1,5 +1,7 @@
 import { useEffect, useRef } from 'react'
+import type { CSSProperties } from 'react'
 import ReactMarkdown from 'react-markdown'
+import type { Components } from 'react-markdown'
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter'
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism'
 import { Bot, User, Loader2 } from 'lucide-react'
@@ -14,6 +16,30 @@ interface Message {
 interface MessageListProps {
   messages: Message[]
   loading: boolean
+}
+
+const syntaxTheme = vscDarkPlus as unknown as { [key: string]: CSSProperties }
+
+const markdownComponents: Components = {
+  code({ className, children, ...props }) {
+    const { inline, ...rest } = props as { inline?: boolean }
+    const match = /language-(\w+)/.exec(className || '')
+
+    return !inline && match ? (
+      <SyntaxHighlighter
+        style={syntaxTheme}
+        language={match[1]}
+        PreTag="div"
+        {...rest}
+      >
+        {String(children).replace(/\n$/, '')}
+      </SyntaxHighlighter>
+    ) : (
+      <code className={className} {...rest}>
+        {children}
+      </code>
+    )
+  },
 }
 
 export default function MessageList({ messages, loading }: MessageListProps) {
@@ -48,25 +74,7 @@ export default function MessageList({ messages, loading }: MessageListProps) {
             {message.role === 'assistant' ? (
               <div className="prose dark:prose-invert prose-sm max-w-none">
                 <ReactMarkdown
-                  components={{
-                    code({ node, inline, className, children, ...props }) {
-                      const match = /language-(\w+)/.exec(className || '')
-                      return !inline && match ? (
-                        <SyntaxHighlighter
-                          style={vscDarkPlus}
-                          language={match[1]}
-                          PreTag="div"
-                          {...props}
-                        >
-                          {String(children).replace(/\n$/, '')}
-                        </SyntaxHighlighter>
-                      ) : (
-                        <code className={className} {...props}>
-                          {children}
-                        </code>
-                      )
-                    },
-                  }}
+                  components={markdownComponents}
                 >
                   {message.content}
                 </ReactMarkdown>
