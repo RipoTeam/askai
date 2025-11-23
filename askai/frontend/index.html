@@ -1,13 +1,953 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>AskAI - Your AI Assistant</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Connectly Super App</title>
+  <style>
+    :root {
+      --bg: #0e1116;
+      --surface: #121620;
+      --surface-2: #171b27;
+      --text: #e8ebf5;
+      --muted: #a7b2c3;
+      --accent: #5b8dff;
+      --accent-2: #9b6bff;
+      --danger: #ff5f6d;
+      --success: #34d399;
+      --shadow: 0 14px 40px rgba(0,0,0,0.35);
+    }
+    [data-theme="light"] {
+      --bg: #f2f3f7;
+      --surface: #ffffff;
+      --surface-2: #eef1f6;
+      --text: #0f141d;
+      --muted: #536072;
+      --accent: #2b6bff;
+      --accent-2: #6b4bff;
+      --shadow: 0 12px 36px rgba(0,0,0,0.12);
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(91,141,255,0.08), transparent 25%),
+                  radial-gradient(circle at 80% 10%, rgba(155,107,255,0.08), transparent 25%),
+                  var(--bg);
+      color: var(--text);
+      display: flex;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 12px;
+    }
+    .phone {
+      width: min(430px, 100%);
+      background: var(--surface);
+      border-radius: 28px;
+      overflow: hidden;
+      box-shadow: var(--shadow);
+      display: flex;
+      flex-direction: column;
+      max-height: 900px;
+      position: relative;
+      border: 1px solid rgba(255,255,255,0.06);
+    }
+    header.topbar {
+      height: 60px;
+      padding: 10px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      background: linear-gradient(120deg, rgba(91,141,255,0.14), rgba(155,107,255,0.12));
+      border-bottom: 1px solid rgba(255,255,255,0.06);
+    }
+    .topbar .title {
+      font-weight: 800;
+      letter-spacing: -0.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .chip {
+      padding: 6px 12px;
+      background: var(--surface-2);
+      border-radius: 999px;
+      color: var(--muted);
+      font-size: 12px;
+      border: 1px solid rgba(255,255,255,0.06);
+      cursor: pointer;
+      transition: 0.2s ease;
+    }
+    .chip.active { background: var(--accent); color: white; }
+    main { flex: 1; overflow-y: auto; padding: 0 0 70px; }
+    main::-webkit-scrollbar { width: 6px; }
+    main::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 999px; }
+    nav.bottom {
+      position: sticky;
+      bottom: 0;
+      background: var(--surface);
+      border-top: 1px solid rgba(255,255,255,0.08);
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      padding: 8px 6px;
+      gap: 4px;
+      z-index: 10;
+    }
+    nav.bottom button {
+      background: transparent;
+      border: none;
+      color: var(--muted);
+      font-size: 11px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+      padding: 8px 4px;
+      border-radius: 14px;
+      transition: 0.2s ease;
+      cursor: pointer;
+    }
+    nav.bottom button.active { color: white; background: var(--surface-2); }
+    nav.bottom .icon { font-size: 18px; }
+    .section { display: none; padding: 12px 16px 20px; }
+    .section.active { display: block; }
+    .card {
+      background: var(--surface-2);
+      border-radius: 18px;
+      padding: 12px;
+      margin-bottom: 12px;
+      border: 1px solid rgba(255,255,255,0.04);
+    }
+    .post-header { display: flex; gap: 10px; align-items: center; }
+    .avatar {
+      width: 42px; height: 42px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      display: grid; place-items: center; font-weight: 700; color: white;
+    }
+    .muted { color: var(--muted); font-size: 12px; }
+    .post-media { margin: 10px 0; border-radius: 14px; overflow: hidden; background: #0d1018; border: 1px solid rgba(255,255,255,0.04); }
+    .post-media img, .post-media video { width: 100%; display: block; height: 220px; object-fit: cover; background: #0d1018; }
+    .post-actions { display: flex; gap: 12px; align-items: center; font-size: 14px; }
+    .pill { padding: 6px 10px; border-radius: 12px; background: rgba(255,255,255,0.06); cursor: pointer; border: 1px solid rgba(255,255,255,0.05); }
+    .story-bar { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 8px; }
+    .story { display: flex; flex-direction: column; align-items: center; gap: 6px; font-size: 12px; color: var(--muted); }
+    .story .avatar { width: 58px; height: 58px; border: 2px solid var(--accent); }
+    .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+    .grid .thumb { border-radius: 14px; background: var(--surface-2); height: 110px; display: grid; place-items: center; color: var(--muted); border: 1px solid rgba(255,255,255,0.05); }
+    .banner-ad { border: 1px dashed rgba(255,255,255,0.3); padding: 10px; text-align: center; border-radius: 14px; color: var(--muted); margin: 10px 0; }
+    .toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: var(--surface-2); color: white; padding: 12px 16px; border-radius: 12px;
+      box-shadow: var(--shadow); opacity: 0; pointer-events: none; transition: 0.25s ease;
+      border: 1px solid rgba(255,255,255,0.08);
+    }
+    .toast.show { opacity: 1; bottom: 30px; }
+    .hidden { display: none !important; }
+    .modal-backdrop {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.55);
+      display: grid; place-items: center; z-index: 20; opacity: 0; pointer-events: none; transition: 0.2s ease;
+    }
+    .modal-backdrop.show { opacity: 1; pointer-events: auto; }
+    .modal { background: var(--surface); border-radius: 16px; padding: 16px; width: min(420px, 92%); border: 1px solid rgba(255,255,255,0.08); max-height: 90vh; overflow-y: auto; }
+    input, textarea, select {
+      width: 100%;
+      background: var(--surface-2);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 12px;
+      padding: 10px 12px;
+      color: var(--text);
+      font-size: 14px;
+    }
+    textarea { resize: vertical; min-height: 90px; }
+    button.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: white; border: none; padding: 12px; border-radius: 12px;
+      width: 100%; font-weight: 700; cursor: pointer; box-shadow: 0 10px 30px rgba(91,141,255,0.3);
+    }
+    button.secondary { background: var(--surface-2); color: var(--text); border: 1px solid rgba(255,255,255,0.08); padding: 10px; border-radius: 10px; cursor: pointer; }
+    .flex { display: flex; }
+    .space-between { display: flex; justify-content: space-between; align-items: center; }
+    .comment-box { margin-top: 8px; padding-top: 8px; border-top: 1px solid rgba(255,255,255,0.05); }
+    .badge { background: var(--accent); color: white; border-radius: 10px; padding: 2px 8px; font-size: 11px; }
+    .status-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .live-card { display: flex; gap: 10px; align-items: center; padding: 10px; border-radius: 12px; background: var(--surface-2); border: 1px solid rgba(255,255,255,0.05); }
+    .live-preview { background: linear-gradient(135deg, #ff5778, #ff914d); width: 70px; height: 70px; border-radius: 12px; display: grid; place-items: center; color: white; font-weight: 700; }
+    .messages { display: grid; grid-template-columns: 1fr; gap: 10px; }
+    .chat-list { border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 10px; }
+    .chat-bubble { max-width: 82%; padding: 10px 12px; border-radius: 12px; margin: 6px 0; }
+    .bubble-me { background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: white; margin-left: auto; }
+    .bubble-them { background: var(--surface-2); color: var(--text); }
+    .story-viewer { position: fixed; inset: 0; background: rgba(0,0,0,0.9); display: none; flex-direction: column; justify-content: center; align-items: center; color: white; z-index: 30; }
+    .story-viewer.active { display: flex; }
+    .story-frame { width: min(420px, 90%); height: 70vh; background: #131722; border-radius: 18px; display: grid; place-items: center; border: 2px solid rgba(255,255,255,0.15); }
+    .report-list li { margin: 6px 0; padding: 8px; border-radius: 10px; background: var(--surface-2); border: 1px solid rgba(255,255,255,0.05); }
+    .sponsored { border: 1px dashed rgba(255,255,255,0.2); }
+    .tab-switch { display: flex; gap: 8px; margin: 8px 0; }
+    .tab-switch button { flex: 1; }
+    @media (min-width: 600px) {
+      .phone { margin-top: 20px; }
+      .messages { grid-template-columns: 0.9fr 1.1fr; }
+      main { padding-bottom: 80px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="phone" id="appShell">
+    <header class="topbar" id="topbar">
+      <div class="title"><span style="font-size:20px">⚡</span> Connectly</div>
+      <div class="top-actions">
+        <button class="chip" id="themeToggle">🌗 Theme</button>
+        <button class="chip" id="settingsBtn">☰</button>
+      </div>
+    </header>
+    <main id="main">
+      <section id="authView" class="section active">
+        <div class="card" style="text-align:center; margin-top:20px;">
+          <h2>Welcome to Connectly</h2>
+          <p class="muted">A super-app that blends social, chat, live, and AI.</p>
+          <button class="primary" id="getStarted">Get Started</button>
+        </div>
+        <div class="card" id="authForms" style="display:none;">
+          <div class="tab-switch">
+            <button class="secondary" id="toSignIn">Sign In</button>
+            <button class="secondary" id="toSignUp">Sign Up</button>
+          </div>
+          <div id="signInForm">
+            <input placeholder="Username or Email" id="loginUser" />
+            <input placeholder="Password" type="password" id="loginPass" style="margin-top:8px;" />
+            <button class="primary" style="margin-top:12px;" id="loginBtn">Login</button>
+          </div>
+          <div id="signUpForm" class="hidden">
+            <input placeholder="Username" id="signupUser" />
+            <input placeholder="Email" type="email" id="signupEmail" style="margin-top:8px;" />
+            <input placeholder="Password" type="password" id="signupPass" style="margin-top:8px;" />
+            <input placeholder="Confirm Password" type="password" id="signupPass2" style="margin-top:8px;" />
+            <button class="primary" style="margin-top:12px;" id="signupBtn">Create account</button>
+          </div>
+          <div id="authMsg" class="muted" style="margin-top:10px;"></div>
+        </div>
+      </section>
+
+      <section id="home" class="section">
+        <div class="card banner-ad">Banner Ad • Boost your brand with Connectly Ads</div>
+        <div class="story-bar" id="storyBar"></div>
+        <div class="card" style="display:flex; gap:10px; align-items:center;">
+          <div class="avatar" id="quickStory">+</div>
+          <input placeholder="Share something..." id="quickPostInput" />
+          <button class="chip" id="quickPostBtn">Post</button>
+        </div>
+        <div class="tab-switch">
+          <button class="secondary" id="forYouBtn">For You</button>
+          <button class="secondary" id="followingBtn">Following</button>
+        </div>
+        <div id="feed"></div>
+      </section>
+
+      <section id="explore" class="section">
+        <div class="card">
+          <input placeholder="Search people, tags, vibes..." id="exploreSearch" />
+          <div class="tab-switch" id="exploreFilters"></div>
+        </div>
+        <div class="card">
+          <h3>Trending Hashtags</h3>
+          <div id="trendingTags" style="display:flex; flex-wrap:wrap; gap:8px; margin-top:6px;"></div>
+        </div>
+        <div class="card">
+          <h3>Trending Users</h3>
+          <div id="trendingUsers"></div>
+        </div>
+        <div class="card">
+          <h3>Trending Posts</h3>
+          <div class="grid" id="trendingPosts"></div>
+        </div>
+      </section>
+
+      <section id="create" class="section">
+        <div class="card">
+          <h3>Create Post</h3>
+          <textarea id="createCaption" placeholder="What's happening?"></textarea>
+          <select id="mediaSelect" style="margin-top:8px;">
+            <option value="">No media</option>
+            <option>City night skyline</option>
+            <option>Foodie closeup</option>
+            <option>Travel beach</option>
+            <option>Workout clip</option>
+          </select>
+          <input id="hashtagInput" placeholder="#hashtags" style="margin-top:8px;" />
+          <div class="tab-switch" style="margin-top:8px;">
+            <button class="secondary" id="aiCaptionBtn">Generate AI Caption</button>
+            <button class="secondary" id="aiHashtagBtn">AI Hashtags</button>
+          </div>
+          <button class="primary" id="postBtn" style="margin-top:10px;">Post</button>
+        </div>
+      </section>
+
+      <section id="messages" class="section">
+        <div class="card">
+          <h3>Messages</h3>
+          <div class="messages">
+            <div class="chat-list" id="chatList"></div>
+            <div class="chat-window">
+              <div class="space-between" id="chatHeader">
+                <div><span class="status-dot" id="chatStatus" style="background:#00d08a;"></span><span id="chatUser">Select a chat</span></div>
+                <button class="chip" id="aiReplyBtn">🤖 AI Reply</button>
+              </div>
+              <div id="chatMessages" style="height:260px; overflow-y:auto; margin:8px 0;"></div>
+              <div style="display:flex; gap:6px;">
+                <input id="chatInput" placeholder="Message..." />
+                <button class="chip" id="sendMsg">➡️</button>
+                <button class="chip">🎤</button>
+                <button class="chip">📎</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="live" class="section">
+        <div class="card">
+          <div class="space-between">
+            <div>
+              <h3>Live</h3>
+              <p class="muted">Go live or join streams in one tap.</p>
+            </div>
+            <button class="chip" id="goLiveBtn">🔴 Go Live</button>
+          </div>
+        </div>
+        <div id="liveList"></div>
+      </section>
+
+      <section id="profile" class="section">
+        <div class="card" id="profileHeader"></div>
+        <div class="card">
+          <div class="tab-switch">
+            <button class="secondary" id="profilePostsTab">Posts</button>
+            <button class="secondary" id="profileSavedTab">Saved</button>
+          </div>
+          <div class="grid" id="profileGrid"></div>
+        </div>
+      </section>
+
+      <section id="settings" class="section">
+        <div class="card">
+          <h3>Settings & More</h3>
+          <div class="space-between" style="margin:8px 0;">
+            <span>Theme</span>
+            <select id="themeSelect" style="width:140px;">
+              <option value="dark">Dark</option>
+              <option value="light">Light</option>
+            </select>
+          </div>
+          <div class="space-between" style="margin:8px 0;">
+            <span>Language</span>
+            <select id="langSelect" style="width:160px;">
+              <option>English</option>
+              <option>Español</option>
+              <option>Deutsch</option>
+            </select>
+          </div>
+          <div style="margin:8px 0;">
+            <p class="muted">Notifications</p>
+            <label><input type="checkbox" id="notifPush" checked /> Push</label>
+            <label style="margin-left:10px;"><input type="checkbox" id="notifEmail" /> Email</label>
+          </div>
+          <button class="secondary" id="accountManager">Manage Accounts</button>
+          <button class="secondary" id="moderationBtn" style="margin-top:6px;">Moderation Console</button>
+          <p class="muted" style="margin-top:10px;">Privacy & Safety • About • Help</p>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom" id="bottomNav">
+      <button data-target="home" class="active"><span class="icon">🏠</span>Home</button>
+      <button data-target="explore"><span class="icon">🔍</span>Explore</button>
+      <button data-target="create"><span class="icon">➕</span>Create</button>
+      <button data-target="messages"><span class="icon">💬</span>Messages</button>
+      <button data-target="live"><span class="icon">📺</span>Live</button>
+      <button data-target="profile"><span class="icon">👤</span>Profile</button>
+    </nav>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal-backdrop" id="postModal">
+    <div class="modal">
+      <div class="space-between"><h3>Post</h3><button class="chip" onclick="closePostModal()">✕</button></div>
+      <div id="postModalContent"></div>
+      <button class="primary" style="margin-top:10px;" onclick="showBoostModal()">Boost Post</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="reportModal">
+    <div class="modal">
+      <div class="space-between"><h3>Report</h3><button class="chip" onclick="toggleReport(false)">✕</button></div>
+      <p class="muted">Why are you reporting this content?</p>
+      <div id="reportReasons"></div>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="accountModal">
+    <div class="modal">
+      <div class="space-between"><h3>Accounts</h3><button class="chip" onclick="toggleAccountModal(false)">✕</button></div>
+      <div id="accountList"></div>
+      <button class="primary" style="margin-top:10px;" id="addAccountBtn">Add another account</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="editProfileModal">
+    <div class="modal">
+      <div class="space-between"><h3>Edit Profile</h3><button class="chip" onclick="toggleEdit(false)">✕</button></div>
+      <input id="editName" placeholder="Display name" />
+      <textarea id="editBio" style="margin-top:8px;" placeholder="Bio"></textarea>
+      <input id="editColor" style="margin-top:8px;" placeholder="Avatar color (e.g., #6b4bff)" />
+      <button class="primary" style="margin-top:10px;" id="saveProfile">Save</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="moderationModal">
+    <div class="modal">
+      <div class="space-between"><h3>Moderation Console</h3><button class="chip" onclick="toggleModeration(false)">✕</button></div>
+      <ul class="report-list" id="reportList"></ul>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="boostModal">
+    <div class="modal">
+      <div class="space-between"><h3>Boost Post</h3><button class="chip" onclick="toggleBoost(false)">✕</button></div>
+      <p>Choose a quick promotion:</p>
+      <div class="tab-switch">
+        <button class="secondary">Reach 1k people</button>
+        <button class="secondary">Promote to friends</button>
+        <button class="secondary">Drive profile visits</button>
+      </div>
+      <button class="primary" style="margin-top:10px;">Start Boost (mock)</button>
+    </div>
+  </div>
+
+  <div class="story-viewer" id="storyViewer">
+    <div class="space-between" style="width:min(420px,90%); margin-bottom:8px;">
+      <div id="storyTitle"></div>
+      <div><button class="chip" onclick="closeStory()">✕</button></div>
+    </div>
+    <div class="story-frame" id="storyFrame">Story</div>
+    <div style="margin-top:10px; display:flex; gap:8px;">
+      <button class="chip" onclick="prevStory()">◀</button>
+      <button class="chip" onclick="nextStory()">▶</button>
+    </div>
+  </div>
+
+  <div class="modal-backdrop" id="liveModal">
+    <div class="modal">
+      <div class="space-between"><h3>Live Stream</h3><button class="chip" onclick="toggleLive(false)">✕</button></div>
+      <div style="background:linear-gradient(135deg,#ff5778,#ff914d); height:220px; border-radius:14px; display:grid; place-items:center; color:white; font-weight:700; margin:8px 0;">Live Placeholder</div>
+      <div id="liveChat" style="height:160px; overflow:auto; background:var(--surface-2); border-radius:12px; padding:8px; border:1px solid rgba(255,255,255,0.05);"></div>
+      <div style="display:flex; gap:6px; margin-top:6px;">
+        <input id="liveInput" placeholder="Say something..." />
+        <button class="chip" id="liveSend">Send</button>
+      </div>
+      <!-- Real WebRTC/live logic would be integrated here -->
+    </div>
+  </div>
+
+  <script>
+    // --- Mock Firebase init (placeholder to satisfy provided config) ---
+    // In a real app, import initializeApp/getAnalytics from Firebase SDK.
+    const initializeApp = (cfg) => ({ mock: true, cfg });
+    const getAnalytics = () => ({ mock: true });
+    const firebaseConfig = {
+      apiKey: "AIzaSyB6R_Ozs8MfhsuJpQJcABV-JMtWHf8b1ps",
+      authDomain: "connectly-e0565.firebaseapp.com",
+      projectId: "connectly-e0565",
+      storageBucket: "connectly-e0565.firebasestorage.app",
+      messagingSenderId: "669892437515",
+      appId: "1:669892437515:web:03690e5aa9f20aa694490e",
+      measurementId: "G-1D2HVH8BT3"
+    };
+    const app = initializeApp(firebaseConfig);
+    const analytics = getAnalytics(app);
+
+    // --- State & storage helpers ---
+    const ls = {
+      get: (k, fallback) => JSON.parse(localStorage.getItem(k) || JSON.stringify(fallback)),
+      set: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+    };
+    const toast = (msg) => {
+      const t = document.getElementById('toast');
+      t.textContent = msg; t.classList.add('show');
+      setTimeout(() => t.classList.remove('show'), 2000);
+    };
+
+    const randomAvatarColor = () => `hsl(${Math.floor(Math.random()*360)},70%,55%)`;
+
+    // --- AI mocks ---
+    function generateAICaption(){
+      const samples = [
+        "Living my best life in pixels ✨",
+        "Moments that feel like movies 🎬",
+        "Night vibes with neon dreams 🌌",
+        "Creating memories that glow 🔮",
+        "Chasing sunsets and dopamine ☀️"
+      ];
+      return samples[Math.floor(Math.random()*samples.length)];
+    }
+    function generateAIHashtags(){
+      const tags = ["#vibes #today #live", "#travel #sunset #city", "#music #flow #groove", "#fitness #focus #grind", "#foodie #yum #snap"];
+      return tags[Math.floor(Math.random()*tags.length)];
+    }
+    function generateAIReply(){
+      const replies = ["On it! That sounds awesome.", "Love this energy — let's go!", "I'll circle back with an update soon.", "Haha, that made my day!", "Saving this, thanks for sharing."];
+      return replies[Math.floor(Math.random()*replies.length)];
+    }
+    function aiModerateContent(text){
+      const lower = text.toLowerCase();
+      const flagged = ['spam','hate','violence','nsfw'];
+      const hit = flagged.some(k=>lower.includes(k));
+      return hit ? 'unsafe' : 'safe';
+    }
+
+    // --- Mock data init ---
+    const defaultUsers = [
+      {id:'u1', username:'armin', email:'armin@demo.dev', password:'pass', displayName:'Armin Šunja', bio:'Creating web experiences.', avatarColor: randomAvatarColor(), followers:184, following:29, saved:[], private:false},
+      {id:'u2', username:'maya', email:'maya@demo.dev', password:'pass', displayName:'Maya Nova', bio:'Photographer • Traveler', avatarColor: randomAvatarColor(), followers:920, following:180, saved:[], private:false},
+      {id:'u3', username:'leo', email:'leo@demo.dev', password:'pass', displayName:'Leo Sparks', bio:'Designer & gamer', avatarColor: randomAvatarColor(), followers:410, following:240, saved:[], private:false}
+    ];
+    const defaultPosts = [
+      {id:'p1', userId:'u2', caption:'Dusk over the old town.', media:'City night skyline', likes:120, comments:[{user:'armin', text:'Insane shot!'}], time:'2h', sponsored:false},
+      {id:'p2', userId:'u3', caption:'Team meetup highlights!', media:'', likes:78, comments:[], time:'4h', sponsored:false},
+      {id:'p3', userId:'u1', caption:'Early snow brings winter vibes.', media:'Travel beach', likes:205, comments:[{user:'maya', text:'I miss summer!'}], time:'1d', sponsored:true}
+    ];
+    const defaultStories = [
+      {id:'s1', userId:'u2', title:'Blue hour', media:'City glow', time:'1h'},
+      {id:'s2', userId:'u3', title:'Coffee break', media:'Cafe vibe', time:'2h'},
+      {id:'s3', userId:'u1', title:'Morning run', media:'Sunrise trail', time:'3h'}
+    ];
+    const defaultChats = {
+      u2: [{from:'u2', text:'Ready for tonight?', time:'08:00'},{from:'me', text:'Absolutely!', time:'08:02'}],
+      u3: [{from:'u3', text:'Can you review my design?', time:'Yesterday'}]
+    };
+    const defaultLives = [
+      {id:'l1', host:'maya', title:'City Walk Live', viewers:2300},
+      {id:'l2', host:'leo', title:'Designing overlays', viewers:980}
+    ];
+
+    function initData(){
+      if(!localStorage.getItem('users')) ls.set('users', defaultUsers);
+      if(!localStorage.getItem('posts')) ls.set('posts', defaultPosts);
+      if(!localStorage.getItem('stories')) ls.set('stories', defaultStories);
+      if(!localStorage.getItem('chats')) ls.set('chats', defaultChats);
+      if(!localStorage.getItem('reports')) ls.set('reports', []);
+      if(!localStorage.getItem('live')) ls.set('live', defaultLives);
+      if(!localStorage.getItem('savedAccounts')) ls.set('savedAccounts', []);
+      const savedCurrent = localStorage.getItem('currentUser');
+      if(savedCurrent) showMain();
+    }
+
+    // --- Auth logic ---
+    function switchAuth(view){
+      document.getElementById('signInForm').classList.toggle('hidden', view!=='in');
+      document.getElementById('signUpForm').classList.toggle('hidden', view!=='up');
+    }
+    function signUp(){
+      const u = document.getElementById('signupUser').value.trim();
+      const e = document.getElementById('signupEmail').value.trim();
+      const p = document.getElementById('signupPass').value;
+      const p2 = document.getElementById('signupPass2').value;
+      const msg = document.getElementById('authMsg');
+      if(!u || !e || !p) return msg.textContent = 'Fill all fields';
+      if(p!==p2) return msg.textContent = 'Passwords do not match';
+      const users = ls.get('users', []);
+      if(users.some(x=>x.username===u || x.email===e)) return msg.textContent='User exists';
+      const id = 'u'+(Date.now());
+      users.push({id, username:u, email:e, password:p, displayName:u, bio:'New here!', avatarColor: randomAvatarColor(), followers:0, following:0, saved:[], private:false});
+      ls.set('users', users);
+      saveAccount({id, username:u});
+      localStorage.setItem('currentUser', id);
+      msg.textContent = 'Account created!';
+      showMain();
+    }
+    function signIn(){
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value;
+      const msg = document.getElementById('authMsg');
+      const users = ls.get('users', []);
+      const found = users.find(x=> (x.username===u || x.email===u) && x.password===p);
+      if(!found) { msg.textContent='Invalid credentials'; return; }
+      localStorage.setItem('currentUser', found.id);
+      saveAccount({id:found.id, username:found.username});
+      msg.textContent='Welcome back!';
+      showMain();
+    }
+
+    // --- Accounts ---
+    function saveAccount(acc){
+      const list = ls.get('savedAccounts', []);
+      if(!list.find(x=>x.id===acc.id)) { list.push(acc); ls.set('savedAccounts', list); }
+    }
+    function renderAccounts(){
+      const wrap = document.getElementById('accountList');
+      wrap.innerHTML='';
+      const list = ls.get('savedAccounts', []);
+      list.forEach(a=>{
+        const users = ls.get('users', []);
+        const u = users.find(x=>x.id===a.id);
+        const div = document.createElement('div');
+        div.className='live-card';
+        div.innerHTML = `<div class="avatar" style="background:${u?.avatarColor||'var(--accent)'}">${(u?.displayName||a.username||'?').slice(0,2).toUpperCase()}</div>
+          <div style="flex:1;"><div>${u?.displayName||a.username}</div><div class="muted">@${a.username}</div></div>
+          <button class="chip" data-switch="${a.id}">Switch</button>
+          <button class="chip" data-remove="${a.id}">Remove</button>`;
+        wrap.appendChild(div);
+      });
+      wrap.querySelectorAll('[data-switch]').forEach(btn=>btn.onclick=()=>{ localStorage.setItem('currentUser', btn.dataset.switch); toast('Switched'); showMain(); toggleAccountModal(false); });
+      wrap.querySelectorAll('[data-remove]').forEach(btn=>btn.onclick=()=>{ const list=ls.get('savedAccounts',[]).filter(x=>x.id!==btn.dataset.remove); ls.set('savedAccounts', list); renderAccounts(); });
+    }
+    function toggleAccountModal(show=true){
+      document.getElementById('accountModal').classList.toggle('show', show);
+      if(show) renderAccounts();
+    }
+
+    // --- Navigation ---
+    function showSection(id){
+      document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+      document.querySelectorAll('nav.bottom button').forEach(b=>b.classList.toggle('active', b.dataset.target===id));
+      updateTopbar(id);
+      if(id==='home') renderFeed();
+      if(id==='explore') renderExplore();
+      if(id==='messages') renderMessages();
+      if(id==='profile') renderProfile();
+      if(id==='live') renderLive();
+    }
+    function updateTopbar(id){
+      const title = document.querySelector('#topbar .title');
+      const actions = document.querySelector('#topbar .top-actions');
+      actions.classList.remove('hidden');
+      if(id==='home') title.innerHTML='<span style="font-size:20px">⚡</span> Connectly';
+      else title.textContent = id.charAt(0).toUpperCase()+id.slice(1);
+      if(id==='settings') actions.classList.add('hidden');
+    }
+
+    // --- Feed ---
+    let forYouMode = true;
+    function renderStories(){
+      const stories = ls.get('stories', []);
+      const wrap = document.getElementById('storyBar');
+      wrap.innerHTML='';
+      stories.forEach(s=>{
+        const user = ls.get('users', []).find(u=>u.id===s.userId);
+        const div = document.createElement('div');
+        div.className='story';
+        div.innerHTML=`<div class="avatar" style="background:${user?.avatarColor||'var(--accent)'}">${(user?.displayName||'U').slice(0,2).toUpperCase()}</div><div>${user?.username||'user'}</div>`;
+        div.onclick=()=>openStory(s.id);
+        wrap.appendChild(div);
+      });
+    }
+    function renderFeed(){
+      renderStories();
+      const feed = document.getElementById('feed');
+      const posts = ls.get('posts', []);
+      const users = ls.get('users', []);
+      const current = localStorage.getItem('currentUser');
+      const currentUser = users.find(u=>u.id===current);
+      let showPosts = posts.slice();
+      if(!forYouMode) showPosts = posts.filter(p=> currentUser && currentUser.following > 0 ? true : true);
+      feed.innerHTML='';
+      showPosts.forEach((p, idx)=>{
+        const user = users.find(u=>u.id===p.userId) || {username:'unknown', displayName:'Unknown', avatarColor:randomAvatarColor()};
+        const card = document.createElement('div');
+        card.className='card'+(p.sponsored?' sponsored':'');
+        card.innerHTML = `
+          <div class="post-header">
+            <div class="avatar" style="background:${user.avatarColor}">${user.displayName.slice(0,2).toUpperCase()}</div>
+            <div style="flex:1;">
+              <div style="font-weight:700;">${user.displayName} <span class="muted">@${user.username}</span></div>
+              <div class="muted">${p.time}${p.sponsored? ' • Sponsored':''}</div>
+            </div>
+            <button class="chip" data-more="${p.id}">···</button>
+          </div>
+          <div style="margin-top:6px;">${p.caption}</div>
+          ${p.media?`<div class="post-media"><div style="height:220px; display:grid; place-items:center; color:var(--muted); background:rgba(255,255,255,0.05);">${p.media}</div></div>`:''}
+          <div class="post-actions">
+            <button class="pill" data-like="${p.id}">❤️ ${p.likes}</button>
+            <button class="pill" data-comment="${p.id}">💬 ${p.comments.length}</button>
+            <button class="pill" data-save="${p.id}">🔖 Save</button>
+            <button class="pill" data-report="${p.id}">⚠️</button>
+          </div>
+          <div class="comment-box hidden" id="comment-${p.id}">
+            <input placeholder="Add a comment" data-newcomment="${p.id}" />
+            <div id="comments-${p.id}"></div>
+          </div>
+        `;
+        feed.appendChild(card);
+        if((idx+1)%3===0 && idx!==showPosts.length-1){
+          const ad = document.createElement('div');
+          ad.className='card sponsored';
+          ad.innerHTML='<div class="muted">Sponsored</div><div style="font-weight:700; margin:6px 0;">Grow your audience with Boosts</div><button class="primary" onclick="toggleBoost(true)">Try Boost</button>';
+          feed.appendChild(ad);
+        }
+      });
+      feed.querySelectorAll('[data-like]').forEach(btn=>btn.onclick=()=>{ const posts=ls.get('posts',[]); const p=posts.find(x=>x.id===btn.dataset.like); p.likes++; ls.set('posts', posts); renderFeed(); });
+      feed.querySelectorAll('[data-comment]').forEach(btn=>btn.onclick=()=>{ document.getElementById('comment-'+btn.dataset.comment).classList.toggle('hidden'); renderComments(btn.dataset.comment); });
+      feed.querySelectorAll('[data-newcomment]').forEach(inp=> inp.onkeydown=(e)=>{ if(e.key==='Enter'){ addComment(inp.dataset.newcomment, inp.value); inp.value=''; }});
+      feed.querySelectorAll('[data-save]').forEach(btn=>btn.onclick=()=>{ savePost(btn.dataset.save); toast('Saved'); });
+      feed.querySelectorAll('[data-more]').forEach(btn=>btn.onclick=()=>{ openPostModal(btn.dataset.more); });
+      feed.querySelectorAll('[data-report]').forEach(btn=>btn.onclick=()=>{ openReport(btn.dataset.report); });
+    }
+    function renderComments(id){
+      const wrap = document.getElementById('comments-'+id); if(!wrap) return;
+      wrap.innerHTML='';
+      const posts = ls.get('posts', []); const p = posts.find(x=>x.id===id);
+      p.comments.forEach(c=>{
+        const div=document.createElement('div');
+        div.className='muted';
+        div.textContent = c.user+': '+c.text;
+        wrap.appendChild(div);
+      });
+    }
+    function addComment(postId, text){
+      if(!text) return;
+      const posts=ls.get('posts',[]); const p=posts.find(x=>x.id===postId);
+      const user = getCurrentUser();
+      p.comments.push({user:user.username, text});
+      ls.set('posts', posts); renderFeed(); toast('Commented');
+    }
+    function savePost(postId){
+      const user = getCurrentUser(); if(!user) return;
+      user.saved = user.saved || [];
+      if(!user.saved.includes(postId)) user.saved.push(postId);
+      const users = ls.get('users', []).map(u=>u.id===user.id?user:u);
+      ls.set('users', users);
+    }
+
+    // --- Explore ---
+    const filters = ['#funny','#gaming','#music','#travel','#tech'];
+    function renderExplore(){
+      const filterWrap = document.getElementById('exploreFilters');
+      filterWrap.innerHTML='';
+      filters.forEach(f=>{
+        const btn=document.createElement('button');
+        btn.className='chip'; btn.textContent=f; btn.onclick=()=>toast('Filter '+f);
+        filterWrap.appendChild(btn);
+      });
+      const tags = ['#winter','#bosnia','#design','#ai','#viral'];
+      const tagWrap = document.getElementById('trendingTags');
+      tagWrap.innerHTML='';
+      tags.forEach(t=>{ const b=document.createElement('span'); b.className='chip'; b.textContent=t; tagWrap.appendChild(b); });
+      const users = ls.get('users', []);
+      const tUsers = document.getElementById('trendingUsers'); tUsers.innerHTML='';
+      users.forEach(u=>{
+        const row=document.createElement('div'); row.className='live-card';
+        row.innerHTML=`<div class="avatar" style="background:${u.avatarColor}">${u.displayName.slice(0,2).toUpperCase()}</div>
+          <div style="flex:1;"><div>${u.displayName}</div><div class="muted">@${u.username}</div></div>
+          <button class="chip" data-profile="${u.id}">View</button>`;
+        tUsers.appendChild(row);
+      });
+      tUsers.querySelectorAll('[data-profile]').forEach(btn=>btn.onclick=()=>openProfile(btn.dataset.profile));
+      const tPosts = document.getElementById('trendingPosts'); tPosts.innerHTML='';
+      ls.get('posts', []).forEach(p=>{
+        const div=document.createElement('div'); div.className='thumb'; div.textContent=p.media||p.caption.slice(0,40);
+        div.onclick=()=>openPostModal(p.id);
+        tPosts.appendChild(div);
+      });
+    }
+
+    // --- Create ---
+    function createPost(){
+      const caption=document.getElementById('createCaption').value.trim();
+      const media=document.getElementById('mediaSelect').value;
+      const hashtags=document.getElementById('hashtagInput').value.trim();
+      if(!caption && !media) return toast('Add a caption or media');
+      const posts=ls.get('posts',[]);
+      const id='p'+Date.now();
+      const user=getCurrentUser();
+      const moderate = aiModerateContent(caption);
+      if(moderate==='unsafe') { toast('Content flagged as unsafe'); return; }
+      posts.unshift({id, userId:user.id, caption:caption+(hashtags?' '+hashtags:''), media, likes:0, comments:[], time:'now', sponsored:false});
+      ls.set('posts', posts);
+      document.getElementById('createCaption').value='';
+      document.getElementById('hashtagInput').value='';
+      toast('Posted!');
+      showSection('home');
+    }
+
+    // --- Messages ---
+    let activeChat = null;
+    function renderMessages(){
+      const chats = ls.get('chats', {});
+      const wrap = document.getElementById('chatList');
+      wrap.innerHTML='';
+      Object.keys(chats).forEach(uid=>{
+        const user = ls.get('users', []).find(u=>u.id===uid);
+        const last = chats[uid][chats[uid].length-1];
+        const div=document.createElement('div');
+        div.className='live-card';
+        div.innerHTML=`<div class="avatar" style="width:46px;height:46px;background:${user?.avatarColor||'var(--accent)'}">${(user?.displayName||'U').slice(0,2).toUpperCase()}</div>
+          <div style="flex:1;"><div>${user?.displayName||'User'}</div><div class="muted">${last?.text||''}</div></div>
+          <button class="chip" data-chat="${uid}">Open</button>`;
+        wrap.appendChild(div);
+      });
+      wrap.querySelectorAll('[data-chat]').forEach(btn=>btn.onclick=()=>openChat(btn.dataset.chat));
+      if(activeChat) openChat(activeChat);
+    }
+    function openChat(uid){
+      activeChat = uid;
+      const user = ls.get('users', []).find(u=>u.id===uid);
+      document.getElementById('chatUser').textContent=user?user.displayName:'Chat';
+      const list = ls.get('chats', {});
+      const msgs = list[uid]||[];
+      const wrap = document.getElementById('chatMessages'); wrap.innerHTML='';
+      msgs.forEach(m=>{
+        const bubble=document.createElement('div');
+        bubble.className='chat-bubble ' + (m.from==='me'?'bubble-me':'bubble-them');
+        bubble.textContent = m.text;
+        wrap.appendChild(bubble);
+      });
+      wrap.scrollTop = wrap.scrollHeight;
+    }
+    function sendMessage(){
+      if(!activeChat) return toast('Select a chat');
+      const input=document.getElementById('chatInput');
+      if(!input.value.trim()) return;
+      const chats=ls.get('chats', {}); chats[activeChat]=chats[activeChat]||[];
+      chats[activeChat].push({from:'me', text:input.value.trim(), time:'now'});
+      ls.set('chats', chats);
+      input.value=''; renderMessages();
+      setTimeout(()=>{ chats[activeChat].push({from:activeChat, text:'Auto-reply ✅', time:'now'}); ls.set('chats', chats); renderMessages(); toast('Reply received'); }, 800);
+    }
+
+    // --- Live ---
+    function renderLive(){
+      const lives = ls.get('live', []);
+      const wrap=document.getElementById('liveList'); wrap.innerHTML='';
+      lives.forEach(l=>{
+        const card=document.createElement('div'); card.className='card';
+        card.innerHTML=`<div class="live-card"><div class="live-preview">LIVE</div><div style="flex:1;"><div style="font-weight:700;">${l.title}</div><div class="muted">Host: ${l.host} • ${l.viewers} watching</div></div><button class="chip" data-live="${l.id}">Join</button></div>`;
+        wrap.appendChild(card);
+      });
+      wrap.querySelectorAll('[data-live]').forEach(btn=>btn.onclick=()=>openLive(btn.dataset.live));
+    }
+    function openLive(id){ toggleLive(true); document.getElementById('liveChat').innerHTML='<div class="muted">Live chat started...</div>'; }
+
+    // --- Profile ---
+    let profileTab='posts';
+    function getCurrentUser(){
+      const id=localStorage.getItem('currentUser');
+      return ls.get('users', []).find(u=>u.id===id);
+    }
+    function renderProfile(uid){
+      const user = uid ? ls.get('users', []).find(u=>u.id===uid) : getCurrentUser();
+      if(!user) return;
+      const wrap=document.getElementById('profileHeader');
+      wrap.innerHTML=`<div style="display:flex; gap:12px; align-items:center;">
+        <div class="avatar" style="width:70px;height:70px;background:${user.avatarColor}">${user.displayName.slice(0,2).toUpperCase()}</div>
+        <div>
+          <div style="font-size:20px;font-weight:800;">${user.displayName} ${uid?'' : ''}</div>
+          <div class="muted">@${user.username}</div>
+          <div class="muted">${user.followers} followers • ${user.following} following</div>
+        </div>
+      </div>
+      <p style="margin:10px 0;">${user.bio}</p>
+      ${!uid ? `<div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <button class="secondary" onclick="toggleEdit(true)">Edit profile</button>
+        <button class="secondary" onclick="toggleAccountModal(true)">Switch Account</button>
+        <button class="secondary" onclick="document.getElementById('authView').classList.add('active'); logout()">Log out</button>
+        <button class="secondary" onclick="toggleAccountModal(true)">Add Account</button>
+        <label class="chip" style="cursor:pointer;">Public <input type="checkbox" id="privacyToggle" ${user.private?'':'checked'} style="margin-left:6px;"/></label>
+      </div>` : `<div style="display:flex; gap:8px;">
+        <button class="primary" style="flex:1;" onclick="toast('Followed')">Follow</button>
+        <button class="secondary" onclick="toast('Blocked')">Block</button>
+        <button class="secondary" onclick="openReport('profile-${user.id}')">Report</button>
+      </div>`}`;
+      const grid=document.getElementById('profileGrid');
+      grid.innerHTML='';
+      const posts=ls.get('posts', []);
+      const filtered = profileTab==='posts'? posts.filter(p=>p.userId===user.id) : posts.filter(p=>user.saved?.includes(p.id));
+      filtered.forEach(p=>{ const d=document.createElement('div'); d.className='thumb'; d.textContent=p.media||p.caption.slice(0,30); d.onclick=()=>openPostModal(p.id); grid.appendChild(d); });
+      const privacyToggle=document.getElementById('privacyToggle');
+      if(privacyToggle) privacyToggle.onchange=(e)=>{ user.private=!e.target.checked; const all=ls.get('users',[]).map(u=>u.id===user.id?user:u); ls.set('users', all); toast(user.private?'Private':'Public'); };
+    }
+    function toggleEdit(show=true){ document.getElementById('editProfileModal').classList.toggle('show', show); if(show){ const u=getCurrentUser(); document.getElementById('editName').value=u.displayName; document.getElementById('editBio').value=u.bio; document.getElementById('editColor').value=u.avatarColor; } }
+    document.getElementById('saveProfile').onclick=()=>{ const u=getCurrentUser(); u.displayName=document.getElementById('editName').value; u.bio=document.getElementById('editBio').value; u.avatarColor=document.getElementById('editColor').value||u.avatarColor; const all=ls.get('users',[]).map(x=>x.id===u.id?u:x); ls.set('users', all); toggleEdit(false); renderProfile(); toast('Profile updated'); };
+
+    // --- Stories ---
+    let currentStoryIndex=0;
+    function openStory(id){ const stories=ls.get('stories',[]); currentStoryIndex=stories.findIndex(s=>s.id===id); showStory(); }
+    function showStory(){ const s=ls.get('stories',[])[currentStoryIndex]; if(!s) return; const user=ls.get('users',[]).find(u=>u.id===s.userId); document.getElementById('storyTitle').textContent=`${user?.username||'user'} • ${s.time}`; document.getElementById('storyFrame').textContent=s.media; document.getElementById('storyViewer').classList.add('active'); }
+    function closeStory(){ document.getElementById('storyViewer').classList.remove('active'); }
+    function prevStory(){ const stories=ls.get('stories',[]); currentStoryIndex = (currentStoryIndex-1+stories.length)%stories.length; showStory(); }
+    function nextStory(){ const stories=ls.get('stories',[]); currentStoryIndex = (currentStoryIndex+1)%stories.length; showStory(); }
+
+    // --- Reports ---
+    let reportTarget=null;
+    const reasons=['Spam','Hate','Nudity','Violence','Fake News'];
+    function openReport(target){ reportTarget=target; const wrap=document.getElementById('reportReasons'); wrap.innerHTML=''; reasons.forEach(r=>{ const b=document.createElement('button'); b.className='secondary'; b.style='width:100%; margin-top:6px;'; b.textContent=r; b.onclick=()=>submitReport(r); wrap.appendChild(b); }); toggleReport(true); }
+    function submitReport(reason){ const reports=ls.get('reports', []); reports.push({target:reportTarget, reason, time:new Date().toLocaleString()}); ls.set('reports', reports); toggleReport(false); toast('Reported'); }
+    function toggleReport(show=true){ document.getElementById('reportModal').classList.toggle('show', show); }
+    function toggleModeration(show=true){ document.getElementById('moderationModal').classList.toggle('show', show); if(show) renderReports(); }
+    function renderReports(){ const list=document.getElementById('reportList'); list.innerHTML=''; ls.get('reports', []).forEach(r=>{ const li=document.createElement('li'); li.textContent=`${r.target} • ${r.reason} • ${r.time}`; list.appendChild(li); }); }
+
+    // --- Post modal ---
+    function openPostModal(id){ const p=ls.get('posts', []).find(x=>x.id===id); if(!p) return; const user=ls.get('users', []).find(u=>u.id===p.userId); const wrap=document.getElementById('postModalContent'); wrap.innerHTML=`<div class="post-header"><div class="avatar" style="background:${user.avatarColor}">${user.displayName.slice(0,2).toUpperCase()}</div><div><div>${user.displayName}</div><div class="muted">@${user.username}</div></div></div><p style="margin:8px 0;">${p.caption}</p><div class="post-media"><div style="height:220px; display:grid; place-items:center; color:var(--muted); background:rgba(255,255,255,0.05);">${p.media||'Text only'}</div></div><button class="secondary" style="margin-top:8px;" onclick="openReport('${p.id}')">Report</button><button class="secondary" style="margin-top:6px;" onclick="toast('User blocked')">Block user</button>`; document.getElementById('postModal').classList.add('show'); }
+    function closePostModal(){ document.getElementById('postModal').classList.remove('show'); }
+
+    function toggleBoost(show=true){ document.getElementById('boostModal').classList.toggle('show', show); }
+
+    // --- Live modal ---
+    function toggleLive(show=true){ document.getElementById('liveModal').classList.toggle('show', show); }
+
+    // --- Auth/main switching ---
+    function showMain(){ document.getElementById('authView').classList.remove('active'); showSection('home'); }
+    function logout(){ localStorage.removeItem('currentUser'); showSection('authView'); document.getElementById('authView').classList.add('active'); }
+
+    // --- Theme ---
+    function setTheme(t){ document.documentElement.setAttribute('data-theme', t==='light'?'light':'dark'); document.getElementById('themeSelect').value=t; }
+
+    // --- Event bindings ---
+    document.getElementById('getStarted').onclick=()=>{ document.getElementById('authForms').style.display='block'; };
+    document.getElementById('toSignIn').onclick=()=>switchAuth('in');
+    document.getElementById('toSignUp').onclick=()=>switchAuth('up');
+    document.getElementById('signupBtn').onclick=signUp;
+    document.getElementById('loginBtn').onclick=signIn;
+    document.getElementById('quickPostBtn').onclick=()=>{ document.getElementById('createCaption').value=document.getElementById('quickPostInput').value; showSection('create'); };
+    document.getElementById('quickStory').onclick=()=>{ const user=getCurrentUser(); const stories=ls.get('stories',[]); stories.unshift({id:'s'+Date.now(), userId:user.id, title:'New story', media:'Instant story', time:'now'}); ls.set('stories', stories); renderStories(); toast('Story added'); };
+    document.getElementById('forYouBtn').onclick=()=>{forYouMode=true; renderFeed();};
+    document.getElementById('followingBtn').onclick=()=>{forYouMode=false; renderFeed();};
+    document.getElementById('aiCaptionBtn').onclick=()=>{ document.getElementById('createCaption').value=generateAICaption(); };
+    document.getElementById('aiHashtagBtn').onclick=()=>{ document.getElementById('hashtagInput').value=generateAIHashtags(); };
+    document.getElementById('postBtn').onclick=createPost;
+    document.getElementById('sendMsg').onclick=sendMessage;
+    document.getElementById('aiReplyBtn').onclick=()=>{ if(!activeChat) return toast('Select a chat'); const chats=ls.get('chats', {}); chats[activeChat].push({from:'ai', text:generateAIReply(), time:'now'}); ls.set('chats', chats); renderMessages(); };
+    document.getElementById('goLiveBtn').onclick=()=>{ toast('Starting live...'); toggleLive(true); };
+    document.getElementById('accountManager').onclick=()=>toggleAccountModal(true);
+    document.getElementById('settingsBtn').onclick=()=>showSection('settings');
+    document.getElementById('themeToggle').onclick=()=>{ const current = document.documentElement.getAttribute('data-theme')==='light'?'dark':'light'; setTheme(current); };
+    document.getElementById('themeSelect').onchange=(e)=>setTheme(e.target.value);
+    document.getElementById('moderationBtn').onclick=()=>toggleModeration(true);
+    document.getElementById('addAccountBtn').onclick=()=>{ toggleAccountModal(false); showSection('authView'); document.getElementById('authView').classList.add('active'); };
+    document.getElementById('liveSend').onclick=()=>{ const inp=document.getElementById('liveInput'); if(!inp.value) return; const wrap=document.getElementById('liveChat'); const div=document.createElement('div'); div.textContent=inp.value; wrap.appendChild(div); wrap.scrollTop=wrap.scrollHeight; inp.value=''; };
+
+    document.querySelectorAll('nav.bottom button').forEach(btn=> btn.onclick=()=>showSection(btn.dataset.target));
+    document.getElementById('profilePostsTab').onclick=()=>{profileTab='posts'; renderProfile();};
+    document.getElementById('profileSavedTab').onclick=()=>{profileTab='saved'; renderProfile();};
+
+    window.onclick = (e)=>{
+      ['postModal','reportModal','accountModal','editProfileModal','moderationModal','boostModal','liveModal'].forEach(id=>{
+        const el=document.getElementById(id);
+        if(e.target===el) el.classList.remove('show');
+      });
+    };
+
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') { closeStory(); toggleReport(false); closePostModal(); toggleAccountModal(false); toggleEdit(false); toggleModeration(false); toggleBoost(false); toggleLive(false);} });
+
+    document.getElementById('chatInput').addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
+
+    function openProfile(id){ showSection('profile'); renderProfile(id); }
+    function showBoostModal(){ toggleBoost(true); }
+
+    // --- Initial load ---
+    setTheme('dark');
+    initData();
+    renderFeed();
+  </script>
+</body>
 </html>

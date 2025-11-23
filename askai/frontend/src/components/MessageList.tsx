@@ -49,19 +49,21 @@ export default function MessageList({ messages, loading }: MessageListProps) {
               <div className="prose dark:prose-invert prose-sm max-w-none">
                 <ReactMarkdown
                   components={{
-                    code({ node, inline, className, children, ...props }) {
+                    // Casting to any keeps the prototype flexible while avoiding TS errors in this prototype build.
+                    code(props: any) {
+                      const { inline, className, children, ...rest } = props
                       const match = /language-(\w+)/.exec(className || '')
                       return !inline && match ? (
                         <SyntaxHighlighter
-                          style={vscDarkPlus}
+                          style={vscDarkPlus as any}
                           language={match[1]}
                           PreTag="div"
-                          {...props}
+                          {...rest}
                         >
                           {String(children).replace(/\n$/, '')}
                         </SyntaxHighlighter>
                       ) : (
-                        <code className={className} {...props}>
+                        <code className={className} {...rest}>
                           {children}
                         </code>
                       )
