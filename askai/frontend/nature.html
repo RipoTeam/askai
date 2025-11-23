@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Verdant Realms | Immersive Nature Experience</title>
+  <style>
+    :root {
+      --forest: #0b3d2e;
+      --canopy: #0e5c3f;
+      --leaf: #2ea36f;
+      --mist: #e6f3ed;
+      --sun: #f3c77c;
+      --night: #0a1f1c;
+      --text: #f6fff7;
+      --accent: #7ed957;
+      --card: rgba(255, 255, 255, 0.08);
+      --blur: blur(14px);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: "Inter", system-ui, -apple-system, sans-serif;
+    }
+
+    body {
+      background: radial-gradient(circle at 10% 20%, rgba(126, 217, 87, 0.15), transparent 30%),
+                  radial-gradient(circle at 80% 0%, rgba(243, 199, 124, 0.25), transparent 35%),
+                  linear-gradient(135deg, var(--night), var(--forest));
+      color: var(--text);
+      min-height: 100vh;
+      line-height: 1.7;
+      padding: 24px;
+    }
+
+    .shell {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      background: rgba(11, 61, 46, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      border-radius: 18px;
+      backdrop-filter: var(--blur);
+      position: sticky;
+      top: 12px;
+      z-index: 10;
+    }
+
+    .brand {
+      font-weight: 800;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+      font-size: 18px;
+    }
+
+    nav a {
+      color: var(--text);
+      text-decoration: none;
+      margin-left: 16px;
+      padding: 8px 12px;
+      border-radius: 12px;
+      transition: background 200ms ease, transform 200ms ease;
+    }
+
+    nav a:hover {
+      background: rgba(255, 255, 255, 0.1);
+      transform: translateY(-2px);
+    }
+
+    .hero {
+      margin-top: 36px;
+      padding: 40px;
+      background: linear-gradient(120deg, rgba(11, 61, 46, 0.95), rgba(46, 163, 111, 0.65));
+      border-radius: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      box-shadow: 0 40px 80px rgba(0, 0, 0, 0.25);
+      overflow: hidden;
+      position: relative;
+      isolation: isolate;
+    }
+
+    .hero::after,
+    .hero::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 70% 20%, rgba(243, 199, 124, 0.35), transparent 30%);
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    .hero::before {
+      background: radial-gradient(circle at 20% 70%, rgba(126, 217, 87, 0.3), transparent 40%);
+      mix-blend-mode: screen;
+    }
+
+    .hero-grid {
+      display: grid;
+      grid-template-columns: 3fr 2fr;
+      gap: 28px;
+      align-items: center;
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero h1 {
+      font-size: clamp(32px, 3vw + 12px, 60px);
+      line-height: 1.1;
+      margin-bottom: 18px;
+      letter-spacing: -1px;
+    }
+
+    .hero p {
+      font-size: 18px;
+      max-width: 620px;
+      color: #ddf7e6;
+    }
+
+    .badges {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 18px 0;
+    }
+
+    .badge {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 13px;
+      letter-spacing: 0.2px;
+    }
+
+    .cta {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: linear-gradient(90deg, var(--leaf), var(--accent));
+      color: #0b2c1f;
+      padding: 14px 22px;
+      border-radius: 14px;
+      text-decoration: none;
+      font-weight: 700;
+      box-shadow: 0 16px 40px rgba(46, 163, 111, 0.35);
+      transition: transform 180ms ease, box-shadow 180ms ease;
+      margin-top: 12px;
+    }
+
+    .cta:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 22px 55px rgba(46, 163, 111, 0.4);
+    }
+
+    .panel-grid {
+      margin-top: 40px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 18px;
+    }
+
+    .panel {
+      padding: 20px;
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 18px;
+      backdrop-filter: var(--blur);
+      position: relative;
+      overflow: hidden;
+      isolation: isolate;
+      min-height: 200px;
+    }
+
+    .panel h3 {
+      margin-bottom: 10px;
+      font-size: 18px;
+    }
+
+    .panel p {
+      color: #c8e9d4;
+      font-size: 15px;
+    }
+
+    .stat {
+      font-size: 36px;
+      font-weight: 800;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .panel small {
+      color: #9fd7b4;
+      letter-spacing: 0.3px;
+    }
+
+    .panel::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at 80% 20%, rgba(126, 217, 87, 0.18), transparent 45%);
+      z-index: 0;
+    }
+
+    .panel-content {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .grid-gallery {
+      margin-top: 42px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+    }
+
+    .frame {
+      position: relative;
+      overflow: hidden;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      aspect-ratio: 4 / 3;
+      background: linear-gradient(140deg, #12302b, #0f2521);
+    }
+
+    .frame span {
+      position: absolute;
+      inset: 0;
+      background-size: cover;
+      background-position: center;
+      filter: saturate(1.15);
+      transform: scale(1.05);
+      transition: transform 240ms ease, filter 240ms ease;
+    }
+
+    .frame:hover span {
+      transform: scale(1.12);
+      filter: saturate(1.3);
+    }
+
+    .frame::after {
+      content: attr(data-label);
+      position: absolute;
+      left: 14px;
+      bottom: 12px;
+      background: rgba(0, 0, 0, 0.35);
+      padding: 8px 12px;
+      border-radius: 12px;
+      font-weight: 700;
+      letter-spacing: 0.4px;
+    }
+
+    .eco {
+      margin-top: 48px;
+      padding: 26px;
+      border-radius: 20px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: linear-gradient(180deg, rgba(14, 92, 63, 0.65), rgba(11, 61, 46, 0.85));
+      backdrop-filter: var(--blur);
+    }
+
+    .eco h2 {
+      margin-bottom: 12px;
+      font-size: 26px;
+    }
+
+    .eco-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 12px;
+    }
+
+    .chip {
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      font-weight: 600;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .chip small {
+      color: #cce9d7;
+      font-weight: 500;
+    }
+
+    footer {
+      margin: 36px 0 12px;
+      text-align: center;
+      color: #bce2c8;
+      font-size: 14px;
+    }
+
+    @media (max-width: 840px) {
+      header {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .hero-grid {
+        grid-template-columns: 1fr;
+      }
+
+      nav a {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">Verdant Realms</div>
+      <nav>
+        <a href="#explore">Explore</a>
+        <a href="#ecosystems">Ecosystems</a>
+        <a href="#gallery">Gallery</a>
+      </nav>
+    </header>
+
+    <section class="hero" id="explore">
+      <div class="hero-grid">
+        <div>
+          <h1>Immerse yourself in restorative wilderness</h1>
+          <p>
+            Wander through luminous forests, crystalline waterfalls, and misty alpine ridges. Verdant Realms blends inspiring imagery
+            with mindful storytelling so every scroll feels like stepping deeper into nature.
+          </p>
+          <div class="badges">
+            <span class="badge">Guided biomes</span>
+            <span class="badge">Mindful soundscapes</span>
+            <span class="badge">Conservation-first</span>
+            <span class="badge">Offline-friendly stories</span>
+          </div>
+          <a class="cta" href="#gallery">Start the journey →</a>
+        </div>
+        <div class="panel">
+          <div class="panel-content">
+            <div class="stat">180+</div>
+            <p>Curated trails across rainforests, tundra, reefs, and nocturnal deserts with mindful prompts to ground each visit.</p>
+            <div class="stat">92%</div>
+            <small>of visitors report feeling calmer after a single immersive session.</small>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel-grid" id="ecosystems">
+      <article class="panel">
+        <div class="panel-content">
+          <h3>Rainforest Resonance</h3>
+          <p>Dappled light, biomimicry notes, and layered humidity cues guide you through emerald corridors.</p>
+        </div>
+      </article>
+      <article class="panel">
+        <div class="panel-content">
+          <h3>Alpine Stillness</h3>
+          <p>Feel the thin-air clarity of high peaks with glacial blue gradients and quiet sunrise palettes.</p>
+        </div>
+      </article>
+      <article class="panel">
+        <div class="panel-content">
+          <h3>Coastal Breathing</h3>
+          <p>Tidal rhythms, soft foam textures, and salt-kissed breezes reconnect you to expansive horizons.</p>
+        </div>
+      </article>
+      <article class="panel">
+        <div class="panel-content">
+          <h3>Nightfall Biolumes</h3>
+          <p>Shimmering nocturnal trails pair celestial gradients with subtle firefly flares and moonlit moss.</p>
+        </div>
+      </article>
+    </section>
+
+    <section class="grid-gallery" id="gallery">
+      <div class="frame" data-label="Cloud Forest"> <span style="background-image: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=80');"></span> </div>
+      <div class="frame" data-label="Northern Lights"> <span style="background-image: url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=80');"></span> </div>
+      <div class="frame" data-label="Glacial Lake"> <span style="background-image: url('https://images.unsplash.com/photo-1500534314209-a25ddb2bd429?auto=format&fit=crop&w=1000&q=80');"></span> </div>
+      <div class="frame" data-label="Desert Dusk"> <span style="background-image: url('https://images.unsplash.com/photo-1500530855697-b586d89ba3ee?auto=format&fit=crop&w=1000&q=80');"></span> </div>
+      <div class="frame" data-label="Coral Bloom"> <span style="background-image: url('https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1000&q=80');"></span> </div>
+      <div class="frame" data-label="Ancient Pines"> <span style="background-image: url('https://images.unsplash.com/photo-1501785888041-af3ef285b470?auto=format&fit=crop&w=1000&q=80');"></span> </div>
+    </section>
+
+    <section class="eco">
+      <h2>Conservation-forward journeys</h2>
+      <p>Every landscape invites you to reflect on stewardship. Track your progress, learn local restoration stories, and adopt small rituals that keep wild places thriving.</p>
+      <div class="eco-grid">
+        <div class="chip">Forest bathing ritual <small>8 min grounding</small></div>
+        <div class="chip">Clean coast micro-pledge <small>weekly habit</small></div>
+        <div class="chip">Rewild your balcony <small>pollinator-friendly</small></div>
+        <div class="chip">Low-light terrarium <small>beginner build</small></div>
+        <div class="chip">Dark-sky mindfulness <small>stargaze kit</small></div>
+        <div class="chip">Waterway gratitude <small>sound bath</small></div>
+      </div>
+    </section>
+
+    <footer>
+      Crafted with reverence for the living planet. Breathe, wander, repeat.
+    </footer>
+  </div>
+</body>
+</html>
