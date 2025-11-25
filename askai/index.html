@@ -110,6 +110,15 @@
       z-index: 3;
       background: rgba(255,255,255,0.9);
     }
+    .topbar .right-actions { display: flex; gap: 8px; align-items: center; }
+    .mobile-toggle {
+      display: none;
+      border: 1px solid var(--border);
+      padding: 10px 12px;
+      border-radius: 10px;
+      background: #fff;
+      cursor: pointer;
+    }
     .status {
       font-size: 14px;
       color: var(--muted);
@@ -180,6 +189,24 @@
       cursor: pointer;
       color: var(--muted);
     }
+    .backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      z-index: 19;
+    }
+    .quick-actions { display: flex; gap: 8px; padding: 10px 16px 0; flex-wrap: wrap; }
+    .chip {
+      padding: 8px 12px;
+      border-radius: 14px;
+      border: 1px solid var(--border);
+      background: #f4f4f5;
+      cursor: pointer;
+      font-size: 13px;
+      transition: all 0.2s;
+    }
+    .chip:hover { border-color: var(--accent); color: var(--accent); }
     .login-overlay {
       position: fixed;
       inset: 0;
@@ -223,11 +250,24 @@
     @media (max-width: 900px) {
       .layout { grid-template-columns: 1fr; }
       .sidebar { display: none; }
+      .sidebar.drawer {
+        display: flex;
+        position: fixed;
+        inset: 0 auto 0 0;
+        width: min(86vw, 360px);
+        z-index: 20;
+        box-shadow: 0 18px 48px rgba(0,0,0,0.2);
+        transform: translateX(-105%);
+        transition: transform 0.25s ease;
+      }
+      .sidebar.drawer.open { transform: translateX(0); }
+      .mobile-toggle { display: inline-flex; align-items: center; gap: 6px; }
       .message { max-width: 90%; }
       .app-shell { height: 100vh; }
+      .input-bar { padding-bottom: 16px; }
     }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.63/dist/index.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@mlc-ai/web-llm@0.2.74/dist/index.min.js"></script>
 </head>
 <body>
   <div class="login-overlay" id="login">
@@ -250,8 +290,9 @@
   </div>
 
   <div class="app-shell" id="app">
+    <div class="backdrop" id="backdrop"></div>
     <div class="layout">
-      <aside class="sidebar">
+      <aside class="sidebar drawer" id="drawer">
         <div class="sidebar-header">
           <span>Chats</span>
           <button class="new-chat" id="newChat">+ New</button>
@@ -264,9 +305,18 @@
             <strong>Local Assistant</strong>
             <div class="status" id="modelStatus">Loading engine...</div>
           </div>
-          <button class="clear-btn" id="clearChat">Clear chat</button>
+          <div class="right-actions">
+            <button class="mobile-toggle" id="openDrawer">☰ History</button>
+            <button class="clear-btn" id="clearChat">Clear chat</button>
+          </div>
         </div>
         <div class="chat-window" id="chatWindow"></div>
+        <div class="quick-actions" id="quickActions">
+          <div class="chip" data-text="Give me a concise summary of the key features.">Summary</div>
+          <div class="chip" data-text="List three creative ideas to try.">Ideas</div>
+          <div class="chip" data-text="Explain this like I'm new to the topic.">Explain simply</div>
+          <div class="chip" data-text="Can you draft a short email template for me?">Email template</div>
+        </div>
         <div class="input-bar">
           <input class="input" id="userInput" placeholder="Ask anything..." />
           <button class="send-btn" id="sendBtn">Send</button>
@@ -278,13 +328,15 @@
   <script>
     const AUTH_USER = "ripo";
     const AUTH_PASS = "6000";
-    const MODEL_ID = "Phi-3-mini-4k-instruct-q4f32_1-MLC"; // small and fast for browsers
+    const MODEL_ID = "Phi-3-mini-4k-instruct-q4f16_1-MLC"; // fast, browser-friendly preset
+    const STORAGE_KEY = 'local-chat-conversations-v1';
 
     const state = {
       conversations: [],
       activeId: null,
       enginePromise: null,
       modelReady: false,
+      drawerOpen: false,
     };
 
     const loginOverlay = document.getElementById('login');
@@ -298,10 +350,37 @@
     const loginForm = document.getElementById('loginForm');
     const loginError = document.getElementById('loginError');
     const newChatBtn = document.getElementById('newChat');
+    const drawer = document.getElementById('drawer');
+    const openDrawerBtn = document.getElementById('openDrawer');
+    const backdrop = document.getElementById('backdrop');
+    const quickActions = document.getElementById('quickActions');
 
     const formatTime = (date = new Date()) => {
       return new Intl.DateTimeFormat('en', { hour: 'numeric', minute: '2-digit' }).format(date);
     };
+
+    function persist() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        conversations: state.conversations,
+        activeId: state.activeId,
+      }));
+    }
+
+    function hydrate() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+          const parsed = JSON.parse(raw);
+          state.conversations = (parsed.conversations || []).map(c => ({
+            ...c,
+            createdAt: c.createdAt ? new Date(c.createdAt) : new Date(),
+          }));
+          state.activeId = parsed.activeId || state.conversations[0]?.id || null;
+        }
+      } catch (err) {
+        console.warn('Failed to restore history', err);
+      }
+    }
 
     function ensureConversation() {
       if (!state.conversations.length) {
@@ -309,6 +388,7 @@
         state.conversations.push(first);
         state.activeId = first.id;
       }
+      persist();
     }
 
     function renderHistory() {
@@ -317,9 +397,21 @@
         const item = document.createElement('div');
         item.className = 'history-item' + (conv.id === state.activeId ? ' active' : '');
         item.innerHTML = `<div><div class="history-title">${conv.title}</div><div class="history-meta">${formatTime(conv.createdAt)}</div></div>`;
-        item.onclick = () => { state.activeId = conv.id; renderHistory(); renderChat(); };
+        item.onclick = () => { state.activeId = conv.id; renderHistory(); renderChat(); closeDrawer(); persist(); };
         historyEl.appendChild(item);
       });
+    }
+
+    function openDrawer() {
+      state.drawerOpen = true;
+      drawer.classList.add('open');
+      backdrop.style.display = 'block';
+    }
+
+    function closeDrawer() {
+      state.drawerOpen = false;
+      drawer.classList.remove('open');
+      backdrop.style.display = 'none';
     }
 
     function renderChat() {
@@ -336,7 +428,12 @@
     }
 
     async function initEngine() {
+      if (state.enginePromise) return state.enginePromise;
       try {
+        if (!window.webllm?.CreateMLCEngine) {
+          modelStatus.textContent = 'WebLLM script not ready. Please refresh.';
+          return;
+        }
         modelStatus.textContent = 'Initializing model...';
         const callbacks = {
           onLoadingProgress: (report) => {
@@ -364,6 +461,7 @@
         conv.title = content.slice(0, 30) || 'Conversation';
         renderHistory();
       }
+      persist();
       renderChat();
     }
 
@@ -414,6 +512,7 @@
       const conv = state.conversations.find(c => c.id === state.activeId);
       if (conv) {
         conv.messages = [];
+        persist();
         renderChat();
       }
     }
@@ -424,6 +523,7 @@
       state.activeId = conv.id;
       renderHistory();
       renderChat();
+      persist();
     }
 
     loginForm.addEventListener('submit', (e) => {
@@ -453,12 +553,22 @@
     });
     clearBtn.addEventListener('click', clearChat);
     newChatBtn.addEventListener('click', () => { createConversation(); userInput.focus(); });
+    openDrawerBtn.addEventListener('click', openDrawer);
+    backdrop.addEventListener('click', closeDrawer);
+    quickActions.addEventListener('click', (e) => {
+      const chip = e.target.closest('.chip');
+      if (!chip) return;
+      userInput.value = chip.dataset.text;
+      sendMessage();
+    });
 
     // Initialize default conversation for instant rendering
+    hydrate();
     ensureConversation();
     renderHistory();
     renderChat();
-    modelStatus.textContent = 'Sign in to start the local model.';
+    modelStatus.textContent = 'Preloading model in background...';
+    initEngine();
   </script>
 </body>
 </html>
